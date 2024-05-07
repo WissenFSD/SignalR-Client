@@ -1,0 +1,79 @@
+﻿<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.12/signalr.min.js"></script>
+
+<div class="connectionstate"></div>
+<button class="connect btn btn-outline-success" value="Bağlan">Bağlan</button>
+
+<div class="input-group">
+    <div class="input-group-prepend"></div>
+    <textarea class="textarea form-control " aria-label="Mesajınızı yazın"></textarea>
+</div>
+
+<button type="button" class="btn btn-secondary btnmesaj">Mesaj Gönder</button>
+
+<ul class="messages"></ul>
+
+<button class="disconnect btn btn-outline-danger" value="Disconnect">Bağlantıyı Sonlandır</button>
+
+<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                ...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        var connection;
+
+        $(".connect").click(function () {
+            connection = new signalR.HubConnectionBuilder().withUrl("http://localhost:5000/Wissen").build();
+
+            connection.start().then(() => {
+                var state = connection.state;
+                $(".connectionstate").html('<div class="alert alert-success" role="alert">Durum : ' + state + '</div>');
+            }).catch(error => {
+                var state = connection.state;
+                $(".connectionstate").html('<div class="alert alert-danger" role="alert">Durum : ' + state + '</div>');
+            });
+
+
+            $(".disconnect").click(function () {
+                if (connection) {
+                    connection.stop();
+                    var state = connection.state;
+                    $(".connectionstate").html('<div class="alert alert-danger" role="alert">Durum : ' + state + '</div>');
+                }
+            });
+
+            connection.on("Name", (name) => { 
+                if (name == "modal") {
+                    $('#exampleModalCenter').modal('show')
+                }
+                $(".messages").append('<li>' + name + '</li>');
+                $("body").css("background-color",color)
+            });
+
+            $(".btn").click(function () {
+                var message = $(".textarea").val();
+                connection.invoke("SendAsync", message).catch(err => console.error(err.toString()));
+                $(".textarea").val('');
+            });
+           
+        });
+    });
+</script>
