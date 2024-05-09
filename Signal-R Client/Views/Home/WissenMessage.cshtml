@@ -1,4 +1,4 @@
-﻿<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.12/signalr.min.js"></script>
 
 <div class="connectionstate"></div>
@@ -38,42 +38,57 @@
 
 <script>
     $(document).ready(function () {
+
         var connection;
+        var ip;
 
-        $(".connect").click(function () {
-            connection = new signalR.HubConnectionBuilder().withUrl("http://localhost:5000/Wissen").build();
+        // ip sorgulama işlemi, asenkron bir işlemdir.
+        // ip sorgulama bittikten sonra connect işlemini yapmanız tavsiye edilir.
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
 
-            connection.start().then(() => {
-                var state = connection.state;
-                $(".connectionstate").html('<div class="alert alert-success" role="alert">Durum : ' + state + '</div>');
-            }).catch(error => {
-                var state = connection.state;
-                $(".connectionstate").html('<div class="alert alert-danger" role="alert">Durum : ' + state + '</div>');
-            });
+                connection = new signalR.HubConnectionBuilder().withUrl("http://localhost:5000/Wissen").build();
 
-
-            $(".disconnect").click(function () {
-                if (connection) {
-                    connection.stop();
+                connection.start().then(() => {
+                    var state = connection.state;
+                    $(".connectionstate").html('<div class="alert alert-success" role="alert">Durum : ' + state + '</div>');
+                }).catch(error => {
                     var state = connection.state;
                     $(".connectionstate").html('<div class="alert alert-danger" role="alert">Durum : ' + state + '</div>');
-                }
+                });
+
+                ip = data.ip;
+            })
+            .catch(error => {
+                console.error('Error fetching IP:', error);
             });
 
-            connection.on("Name", (name) => { 
-                if (name == "modal") {
-                    $('#exampleModalCenter').modal('show')
-                }
-                $(".messages").append('<li>' + name + '</li>');
-                $("body").css("background-color",color)
-            });
 
-            $(".btn").click(function () {
-                var message = $(".textarea").val();
-                connection.invoke("SendAsync", message).catch(err => console.error(err.toString()));
-                $(".textarea").val('');
-            });
-           
+
+
+
+
+        $(".disconnect").click(function () {
+            if (connection) {
+                connection.stop();
+                var state = connection.state;
+                $(".connectionstate").html('<div class="alert alert-danger" role="alert">Durum : ' + state + '</div>');
+            }
+        });
+
+        connection.on("Name", (name) => {
+            if (name == "modal") {
+                $('#exampleModalCenter').modal('show')
+            }
+            $(".messages").append('<li>' + name + '</li>');
+            $("body").css("background-color", color)
+        });
+
+        $(".btn").click(function () {
+            var message = $(".textarea").val();
+            connection.invoke("SendAsync",ip+" says to : "+ message).catch(err => console.error(err.toString()));
+            $(".textarea").val('');
         });
     });
 </script>
